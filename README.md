@@ -4,7 +4,7 @@
 [![Rust Documentation](https://docs.rs/variyak/badge.svg)](https://docs.rs/variyak)
 [![Actions Status](https://github.com/sharksforarms/variyak/workflows/CI/badge.svg)](https://github.com/sharksforarms/variyak/actions)
 
-This crate provides a macro `call_variadic` which can be used to contract boilerplate code
+This crate provides a macro `call_variadic` which can be used to construct boilerplate code
 to call variadic functions using data from a container such as a Vec.
 
 Example:

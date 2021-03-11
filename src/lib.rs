@@ -1,6 +1,6 @@
 /*!
 
-This crate provides a macro `call_variadic` which can be used to contract boilerplate code
+This crate provides a macro `call_variadic` which can be used to construct boilerplate code
 to call variadic functions using data from a container such as a Vec.
 
 # Example
