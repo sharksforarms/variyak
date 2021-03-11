@@ -3,7 +3,7 @@
 use variyak::call_variadic;
 
 fn main() {
-    let myvec = vec![1, 2];
+    let data = vec![1, 2];
     let arg = 0;
 
     #[no_mangle]
@@ -12,9 +12,9 @@ fn main() {
     }
 
     unsafe {
-        assert!(call_variadic!(2, myvec, n, myvec[n], my_func(arg, ...)));
-        assert!(call_variadic!(2, myvec, n, myvec[n], my_func(arg, arg, ..., arg)));
-        assert!(call_variadic!(2, myvec, n, myvec[n], my_func(arg, ..., arg)));
-        assert!(call_variadic!(2, myvec, n, myvec[n], my_func(arg, 42 + 27, ..., arg, 10usize)));
+        assert!(call_variadic!(2, data, n, data[n], my_func(arg, ...)));
+        assert!(call_variadic!(2, data, n, data[n], my_func(arg, arg, ..., arg)));
+        assert!(call_variadic!(2, data, n, data[n], my_func(arg, ..., arg)));
+        assert!(call_variadic!(2, data, n, data[n], my_func(arg, 42 + 27, ..., arg, 10usize)));
     };
 }

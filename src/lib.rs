@@ -2,6 +2,48 @@ pub mod export {
     pub use seq_macro::seq;
 }
 
+/// Call a variadic function given a container
+///
+/// * limit: maximum number of arguments to expand
+/// * container: container identifier
+/// * index: index identifier
+/// * expand: argument expression: get `argument` at index `n`
+/// * func: function to call, `...` is the variadic arguments
+///
+/// Example
+/// ```rust
+///     let data = vec![1, 2];
+///     call_variadic!(
+///         2,                  // limit
+///         data,               // container
+///         n,                  // index
+///         data[n],            // expand
+///         my_func(arg, ...)   // func
+///     ));
+///
+///     // Generates:
+///     //     let container_len = data.len();
+///     //     match container_len {
+///     //         0 => my_func(arg),
+///     //         1 => my_func(arg, {
+///     //             let n = 0;
+///     //             data[n]
+///     //         }),
+///     //         2 => my_func(
+///     //             arg,
+///     //             {
+///     //                 let n = 0;
+///     //                 data[n]
+///     //             },
+///     //             {
+///     //                 let n = 1;
+///     //                 data[n]
+///     //             },
+///     //         ),
+///     //         _ => // panic
+///     //         )),
+///     //     }
+/// ```
 #[macro_export]
 macro_rules! call_variadic {
     (
