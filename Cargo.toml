@@ -8,3 +8,5 @@ edition = "2018"
 [dependencies]
 seq-macro = "0.2"
 
+[dev-dependencies]
+libc = "0.2"
