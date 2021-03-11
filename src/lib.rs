@@ -1,16 +1,17 @@
-#![feature(c_variadic)]
-#![feature(trace_macros)]
-
-use seq_macro::seq;
+pub mod export {
+    pub use seq_macro::seq;
+}
 
 #[macro_export]
 macro_rules! call_variadic {
     (
-        $limit:literal, $container:ident, $func:ident ( $($args:tt)* )
+        $limit:literal, $container:ident, $index:ident, $($expand:expr)+, $func:ident ( $($args:tt)* )
     ) => (
-        call_variadic! { @munching
+        call_variadic! { @munch
             (limit: $limit)
             (container: $container)
+            (index: $index)
+            (expand: $($expand)+)
             (funcname: $func)
             (pre: )
 
@@ -19,26 +20,31 @@ macro_rules! call_variadic {
         }
     );
 
-    (@munching
+    (@munch
         (limit: $limit:literal)
         (container: $container:ident)
+        (index: $index:ident)
+        (expand: $($expand:expr)+)
         (funcname: $funcname:ident)
         (pre: $($pre:tt)*)
         ...
         $(, $post:expr)* $(,)?
-    ) => ({
-        seq!(N in 0..=$limit {
+    ) => (
+        $crate::export::seq!(__N in 0..=$limit {{
             let container_len = $container.len();
             match container_len {
                 #(
-                    N => {
-                        seq!(I in 0..N {
-                            $funcname ( 
-                                $($pre,)* 
-                                #( $container[I],)* 
+                    __N => {
+                        $crate::export::seq!(__I in 0..__N {
+                            $funcname (
+                                $($pre,)*
+                                #( {
+                                    let $index = __I;
+                                    $($expand)+
+                                },)*
                                 $($post),*
                             )
-                        });
+                        })
                     }
                 )*
                 _ => {
@@ -49,57 +55,27 @@ macro_rules! call_variadic {
                     )
                 }
             }
-        });
-    });
+        }})
+    );
 
-    (@munching
+    (@munch
         $limit:tt
         $container:tt
+        $index:tt
+        (expand: $($expand:tt)+)
         $funcname:tt
         (pre: $($pre:tt)*)
         $expr:expr,
         $($rest:tt)*
     ) => (
-        call_variadic! { @munching
+        call_variadic! { @munch
             $limit
             $container
+            $index
+            (expand: $($expand)+)
             $funcname
             (pre: $($pre)* $expr)
             $($rest)*
         }
     );
-}
-
-#[cfg(test)]
-mod tests {
-    #![feature(c_variadic)]
-
-    use std::os::raw::c_int;
-
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let myvec = vec![1, 2];
-        let arg1 = 0;
-        let arg2 = 0;
-        let arg3 = 0;
-        let arg4 = 0;
-
-        #[no_mangle]
-        pub unsafe extern "C" fn my_func(fixed: c_int, mut args: ...) {
-            todo!()
-        }
-
-        //fn variable_func<T>(_vargs: &[T]) {}
-
-        unsafe {
-            //let _ = call_variadic!(2, myvec, my_func(...));
-            //trace_macros!(true);
-            let _ = call_variadic!(2, myvec, my_func(arg1, ...));
-            let _ = call_variadic!(2, myvec, my_func(..., arg2));
-            let _ = call_variadic!(2, myvec, my_func(arg1, ..., arg2));
-            let _ = call_variadic!(2, myvec, my_func(arg1, 42 + 27, ..., arg3, arg4));
-        }
-    }
 }
