@@ -4,7 +4,7 @@ This crate provides a macro `call_variadic` which can be used to contract boiler
 to call variadic functions using data from a container such as a Vec.
 
 # Example
-```rust
+```rust,ignore
     let data = vec![1, 2];
     call_variadic!(
         2,                  // limit
