@@ -9,6 +9,6 @@ fn main() {
 
     let format = CStr::from_bytes_with_nul(b"Data: %d %d\n\0").unwrap();
     unsafe {
-        call_variadic!(2, data, n, data[n], printf(format.as_ptr(), ...));
+        call_variadic!(printf(format.as_ptr(), ...), data, n, data[n], 2);
     }
 }

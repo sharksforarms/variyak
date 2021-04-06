@@ -18,23 +18,30 @@ fn main() {
     let data = vec![1, 2];
     let arg = 0;
 
-    #[no_mangle]
-    pub unsafe extern "C" fn my_func(_fixed: u32, mut _args: ...) -> bool {
-        true
+    mod test {
+        #[no_mangle]
+        pub unsafe extern "C" fn my_func(_fixed: u32, mut _args: ...) -> bool {
+            true
+        }
     }
 
     unsafe {
         assert!(call_variadic!(
-            2,                  // maximum number of arguments to expand
-            data,               // container identifier
-            n,                  // index identifier
-            data[n],            // argument expression: get `argument` at index `n`
-            my_func(arg, ...)   // function to call, `...` is the variadic arguments
+            test::my_func(arg, ...)   // function to call, `...` is the variadic arguments
+            data,                     // container identifier
+            n,                        // index identifier
+            data[n],                  // argument expression: get `argument` at index `n`
+            2,                        // maximum number of arguments to expand
         ));
+    }
 
-        assert!(call_variadic!(2, data, n, data[n], my_func(arg, arg, ..., arg)));
-        assert!(call_variadic!(2, data, n, data[n], my_func(arg, ..., arg)));
-        assert!(call_variadic!(2, data, n, data[n], my_func(arg, 42 + 27, ..., arg, 10usize)));
+    unsafe {
+        use test::my_func;
+        assert!(call_variadic!(my_func(arg, ...), data, n, data[n], 2));
+        assert!(call_variadic!(my_func(arg, ...), data, n, data[n], 2));
+        assert!(call_variadic!(my_func(arg, arg, ..., arg), data, n, data[n], 2));
+        assert!(call_variadic!(my_func(arg, ..., arg), data, n, data[n], 2));
+        assert!(call_variadic!(my_func(arg, 42 + 27, ..., arg, 10usize), data, n, data[n], 2));
     };
 }
 ```

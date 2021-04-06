@@ -7,11 +7,11 @@ to call variadic functions using data from a container such as a Vec.
 ```rust,ignore
     let data = vec![1, 2];
     call_variadic!(
-        2,                  // limit
+        my_func(arg, ...)   // func
         data,               // container
         n,                  // index
         data[n],            // expand
-        my_func(arg, ...)   // func
+        2,                  // limit
     );
 
     // Generates:
@@ -33,7 +33,7 @@ to call variadic functions using data from a container such as a Vec.
     //                 data[n]
     //             },
     //         ),
-    //         _ => // panic
+    //         _ => panic!("expected container size of: 0..=2 got data.len(): {}", container_len)
     //         )),
     //     }
 */
@@ -45,11 +45,11 @@ pub mod export {
 /**
 Call a variadic function given a container
 
-* limit: maximum number of arguments to expand
+* func: function call, `...` is the variadic arguments
 * container: container identifier
 * index: index identifier
 * expand: argument expression: get `argument` at index `n`
-* func: function to call, `...` is the variadic arguments
+* limit: maximum number of arguments to expand
 
 # Panics
 
@@ -58,81 +58,107 @@ Panics if size of container is greater than `limit`
 #[macro_export]
 macro_rules! call_variadic {
     (
-        $limit:literal, $container:ident, $index:ident, $($expand:expr)+, $func:ident $( :: $func_tail:ident )* ( $($args:tt)* )
+        $func:ident $( :: $func_tail:ident )* ( $($args:tt)* ), $container:ident, $index:ident, $($expand:expr)+, $limit:literal
     ) => (
         call_variadic! { @munch
-            (limit: $limit)
-            (container: $container)
-            (index: $index)
-            (expand: $($expand)+)
             (func: $func)
             (func_tail: $($func_tail)*)
             (pre: )
 
             /* to parse */
-            $($args)*
+            (args: $($args)*)
+
+            (container: $container)
+            (index: $index)
+            (expand: $($expand)+)
+            (limit: $limit)
         }
     );
 
     (@munch
-        (limit: $limit:literal)
-        (container: $container:ident)
-        (index: $index:ident)
-        (expand: $($expand:expr)+)
         (func: $func:ident)
         (func_tail: $($func_tail:ident)*)
         (pre: $($pre:tt)*)
-        ...
-        $(, $post:expr)* $(,)?
-    ) => (
-        $crate::export::seq!(__N in 0..=$limit {{
-            let container_len = $container.len();
-            match container_len {
-                #(
-                    __N => {
-                        $crate::export::seq!(__I in 0..__N {
-                            $func $(:: $func_tail)* (
-                                $($pre,)*
-                                #( {
-                                    let $index = __I;
-                                    $($expand)+
-                                },)*
-                                $($post),*
-                            )
-                        })
-                    }
-                )*
-                _ => {
-                    panic!("expected container size of: 0..={} got {}.len(): {}",
-                        stringify!($limit),
-                        stringify!($container),
-                        container_len
-                    )
-                }
-            }
-        }})
+        (post: $($post:tt)*)
+
+        (container: $container:ident)
+        (index: $index:ident)
+        (expand: $($expand:expr)+)
+        (limit: $limit:literal)
+     ) => (
+         $crate::export::seq!(__N in 0..=$limit {{
+             let container_len = $container.len();
+             match container_len {
+                 #(
+                     __N => {
+                         $crate::export::seq!(__I in 0..__N {
+                             $func $(:: $func_tail)* (
+                                 $($pre,)*
+                                 #( {
+                                     let $index = __I;
+                                     $($expand)+
+                                 },)*
+                                 $($post),*
+                                 )
+                         })
+                     }
+                  )*
+                     _ => {
+                         panic!("expected container size of: 0..={} got {}.len(): {}",
+                         stringify!($limit),
+                         stringify!($container),
+                         container_len
+                         )
+                     }
+             }
+         }})
     );
 
     (@munch
-        $limit:tt
+        (func: $func:ident)
+        (func_tail: $($func_tail:ident)*)
+        (pre: $($pre:tt)*)
+        (args: ... $(, $post:expr)* $(,)?)
+
         $container:tt
         $index:tt
         (expand: $($expand:tt)+)
-        $func:tt
-        (func_tail: $($func_tail:tt)*)
-        (pre: $($pre:tt)*)
-        $expr:expr,
-        $($rest:tt)*
+        $limit:tt
     ) => (
         call_variadic! { @munch
-            $limit
+            (func: $func)
+            (func_tail: $($func_tail)*)
+            (pre: $($pre)*)
+            (post: $($post)*)
+
             $container
             $index
             (expand: $($expand)+)
+            $limit
+        }
+    );
+
+    (@munch
+        $func:tt
+        (func_tail: $($func_tail:tt)*)
+        (pre: $($pre:tt)*)
+        (args: $expr:expr, $($rest:tt)*)
+
+        $container:tt
+        $index:tt
+        (expand: $($expand:tt)+)
+        $limit:tt
+    ) => (
+        call_variadic! { @munch
             $func
             (func_tail: $($func_tail)*)
             (pre: $($pre)* $expr)
-            $($rest)*
+            (args: $($rest)*)
+
+            $container
+            $index
+            (expand: $($expand)+)
+            $limit
         }
     );
 }

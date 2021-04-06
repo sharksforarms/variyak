@@ -14,15 +14,15 @@ fn main() {
     }
 
     unsafe {
-        assert!(call_variadic!(2, data, n, data[n], test::my_func(arg, ...)));
+        assert!(call_variadic!(test::my_func(arg, ...), data, n, data[n], 2));
     }
 
     unsafe {
         use test::my_func;
-        assert!(call_variadic!(2, data, n, data[n], my_func(arg, ...)));
-        assert!(call_variadic!(2, data, n, data[n], my_func(arg, ...)));
-        assert!(call_variadic!(2, data, n, data[n], my_func(arg, arg, ..., arg)));
-        assert!(call_variadic!(2, data, n, data[n], my_func(arg, ..., arg)));
-        assert!(call_variadic!(2, data, n, data[n], my_func(arg, 42 + 27, ..., arg, 10usize)));
+        assert!(call_variadic!(my_func(arg, ...), data, n, data[n], 2));
+        assert!(call_variadic!(my_func(arg, ...), data, n, data[n], 2));
+        assert!(call_variadic!(my_func(arg, arg, ..., arg), data, n, data[n], 2));
+        assert!(call_variadic!(my_func(arg, ..., arg), data, n, data[n], 2));
+        assert!(call_variadic!(my_func(arg, 42 + 27, ..., arg, 10usize), data, n, data[n], 2));
     };
 }
