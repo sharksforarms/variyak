@@ -58,14 +58,15 @@ Panics if size of container is greater than `limit`
 #[macro_export]
 macro_rules! call_variadic {
     (
-        $limit:literal, $container:ident, $index:ident, $($expand:expr)+, $func:ident ( $($args:tt)* )
+        $limit:literal, $container:ident, $index:ident, $($expand:expr)+, $func:ident $( :: $func_tail:ident )* ( $($args:tt)* )
     ) => (
         call_variadic! { @munch
             (limit: $limit)
             (container: $container)
             (index: $index)
             (expand: $($expand)+)
-            (funcname: $func)
+            (func: $func)
+            (func_tail: $($func_tail)*)
             (pre: )
 
             /* to parse */
@@ -78,7 +79,8 @@ macro_rules! call_variadic {
         (container: $container:ident)
         (index: $index:ident)
         (expand: $($expand:expr)+)
-        (funcname: $funcname:ident)
+        (func: $func:ident)
+        (func_tail: $($func_tail:ident)*)
         (pre: $($pre:tt)*)
         ...
         $(, $post:expr)* $(,)?
@@ -89,7 +91,7 @@ macro_rules! call_variadic {
                 #(
                     __N => {
                         $crate::export::seq!(__I in 0..__N {
-                            $funcname (
+                            $func $(:: $func_tail)* (
                                 $($pre,)*
                                 #( {
                                     let $index = __I;
@@ -116,7 +118,8 @@ macro_rules! call_variadic {
         $container:tt
         $index:tt
         (expand: $($expand:tt)+)
-        $funcname:tt
+        $func:tt
+        (func_tail: $($func_tail:tt)*)
         (pre: $($pre:tt)*)
         $expr:expr,
         $($rest:tt)*
@@ -126,7 +129,8 @@ macro_rules! call_variadic {
             $container
             $index
             (expand: $($expand)+)
-            $funcname
+            $func
+            (func_tail: $($func_tail)*)
             (pre: $($pre)* $expr)
             $($rest)*
         }
